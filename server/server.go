@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"hash"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -51,10 +52,12 @@ func newHandleHash(stats *Statistics) func(w http.ResponseWriter, r *http.Reques
 	return func(w http.ResponseWriter, r *http.Request) {
 		startTime := time.Now()
 		timer := time.NewTimer(hashResponseTime * time.Second)
+		log.Println("INFO: Received request:", r)
 
 		//verify correct method
 		if r.Method != "POST" {
 			writeMethodNotAllowed(w, "POST")
+			log.Println("ERROR: Received invalid /hash request method")
 			return
 		}
 
@@ -63,9 +66,11 @@ func newHandleHash(stats *Statistics) func(w http.ResponseWriter, r *http.Reques
 		err := readBodyIntoHash(r, hasher)
 		if err != nil {
 			writeBadRequest(w)
+			log.Println("ERROR: Unable to decode body in POST /hash request")
 			return
 		}
 		sha := base64.StdEncoding.EncodeToString(hasher.Sum(nil))
+		log.Println("INFO: Calculated encoded hash", sha)
 
 		//write the response
 		respBody := HashResponseBody{sha}
@@ -84,14 +89,17 @@ func newHandleHash(stats *Statistics) func(w http.ResponseWriter, r *http.Reques
 
 		//wait for the timer to expire
 		<-timer.C
+		log.Println("INFO: Request complete")
 	}
 }
 
 //newHandleStatistics returns a HandleFunc for the /statistics endpoint
 func newHandleStatistics(stats *Statistics) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("INFO: Received request:", r)
 		if r.Method != "GET" {
 			writeMethodNotAllowed(w, "GET")
+			log.Println("ERROR: Received invalid /hash request method")
 			return
 		}
 
@@ -104,17 +112,21 @@ func newHandleStatistics(stats *Statistics) func(w http.ResponseWriter, r *http.
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Write(marshalled)
+		log.Println("INFO: Processed GET /statistics request with average:", stats.Average, ", total:", stats.Total)
 	}
 }
 
 //newHandleShutdown returns a HandleFunc for the /shutdown endpoint
 func newHandleShutdown(s *http.Server, triggerCh chan bool) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("INFO: Received request:", r)
 		if r.Method != "POST" {
 			writeMethodNotAllowed(w, "POST")
+			log.Println("ERROR: Received invalid /shutdown request method")
 			return
 		}
 
+		log.Println("INFO: Triggering server shutdown")
 		triggerCh <- true
 		w.WriteHeader(http.StatusAccepted)
 	}
