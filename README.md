@@ -1,10 +1,10 @@
-README
+# README
 
 jumpcloud is a server that meets the requirements of the JumpCloud Interview Assignment.
 
 
 
-API:
+## API:
 
 POST /hash       - Calculates the base64 encoding of the sha512 hash of the provided input and will not complete the request within 5 seconds.  Accepts a JSON body of the form {"password": string}.  Returns a JSON body of the form {"hash": string}.  If "hash" is not specified, it defaults to the empty string.  Returns HTTP response code 200 upon success.
 
@@ -13,12 +13,12 @@ GET  /statistics - Retrieves statistics of the number of requests to "POST /hash
 POST /shutdown   - Initiates a graceful shutdown of the server, allowing in-flight requests to complete.  Returns HTTP response code 202 upon success.
 
 
-Usage:
+## Usage:
 
 To install, issue "go get github.com/dkrisa/jumpcloud".  To run, issue "jumpcloud".  Go version 1.11 required.  The app listens on port 8000.
 
 
-Design choices & idiosyncrasies:
+## Design choices & idiosyncrasies:
 
 To avoid excessive locking, calls to "/statistics" do not lock the underlying object when extracting the statistics.  As a result, it is possible that for a given call to "POST /hash", the "average" field has been updated but the "total" field has not.  The only potentially confusing scenario is for the very first transaction, when the "average" is set to a value, but the "total" is still at 0.
 
